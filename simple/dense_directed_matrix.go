@@ -54,7 +54,7 @@ func NewDirectedMatrix(n int, init, self, absent float64) *DirectedMatrix {
 func NewDirectedMatrixFrom(nodes []graph.Node, init, self, absent float64) *DirectedMatrix {
 	sort.Sort(ordered.ByID(nodes))
 	for i, n := range nodes {
-		if i != n.ID() {
+		if i != int(n.ID()) {
 			panic("simple: non-contiguous node IDs")
 		}
 	}
@@ -64,7 +64,7 @@ func NewDirectedMatrixFrom(nodes []graph.Node, init, self, absent float64) *Dire
 }
 
 // Node returns the node in the graph with the given ID.
-func (g *DirectedMatrix) Node(id int) graph.Node {
+func (g *DirectedMatrix) Node(id graph.NodeID) graph.Node {
 	if !g.has(id) {
 		return nil
 	}
@@ -74,14 +74,15 @@ func (g *DirectedMatrix) Node(id int) graph.Node {
 	return g.nodes[id]
 }
 
-// Has returns whether the node exists within the graph.
-func (g *DirectedMatrix) Has(n graph.Node) bool {
-	return g.has(n.ID())
+// Has reports whether the node exists within the graph.
+func (g *DirectedMatrix) Has(n graph.NodeID) bool {
+	return g.has(n)
 }
 
-func (g *DirectedMatrix) has(id int) bool {
+// has reports whether the node exists within the graph.
+func (g *DirectedMatrix) has(id graph.NodeID) bool {
 	r, _ := g.mat.Dims()
-	return 0 <= id && id < r
+	return 0 <= int(id) && int(id) < r
 }
 
 // Nodes returns all the nodes in the graph.
@@ -109,99 +110,98 @@ func (g *DirectedMatrix) Edges() []graph.Edge {
 				continue
 			}
 			if w := g.mat.At(i, j); !isSame(w, g.absent) {
-				edges = append(edges, Edge{F: g.Node(i), T: g.Node(j), W: w})
+				edges = append(edges, Edge{F: g.Node(graph.NodeID(i)), T: g.Node(graph.NodeID(j)), W: w})
 			}
 		}
 	}
 	return edges
 }
 
-// From returns all nodes in g that can be reached directly from n.
-func (g *DirectedMatrix) From(n graph.Node) []graph.Node {
-	id := n.ID()
+// From returns all nodes in g that can be reached directly from the node.
+func (g *DirectedMatrix) From(id graph.NodeID) []graph.Node {
 	if !g.has(id) {
 		return nil
 	}
 	var neighbors []graph.Node
+	i := int(id)
 	_, c := g.mat.Dims()
 	for j := 0; j < c; j++ {
-		if j == id {
+		if j == i {
 			continue
 		}
-		if !isSame(g.mat.At(id, j), g.absent) {
-			neighbors = append(neighbors, g.Node(j))
+		if !isSame(g.mat.At(i, j), g.absent) {
+			neighbors = append(neighbors, g.Node(graph.NodeID(j)))
 		}
 	}
 	return neighbors
 }
 
-// To returns all nodes in g that can reach directly to n.
-func (g *DirectedMatrix) To(n graph.Node) []graph.Node {
-	id := n.ID()
+// To returns all nodes in g that can reach directly to the node.
+func (g *DirectedMatrix) To(id graph.NodeID) []graph.Node {
 	if !g.has(id) {
 		return nil
 	}
 	var neighbors []graph.Node
+	j := int(id)
 	r, _ := g.mat.Dims()
 	for i := 0; i < r; i++ {
-		if i == id {
+		if i == j {
 			continue
 		}
-		if !isSame(g.mat.At(i, id), g.absent) {
-			neighbors = append(neighbors, g.Node(i))
+		if !isSame(g.mat.At(i, j), g.absent) {
+			neighbors = append(neighbors, g.Node(graph.NodeID(i)))
 		}
 	}
 	return neighbors
 }
 
-// HasEdgeBetween returns whether an edge exists between nodes x and y without
+// HasEdgeBetween reports whether an edge exists between nodes x and y without
 // considering direction.
-func (g *DirectedMatrix) HasEdgeBetween(x, y graph.Node) bool {
-	xid := x.ID()
-	if !g.has(xid) {
+func (g *DirectedMatrix) HasEdgeBetween(x, y graph.NodeID) bool {
+	i := int(x)
+	if !g.has(x) {
 		return false
 	}
-	yid := y.ID()
-	if !g.has(yid) {
+	j := int(y)
+	if !g.has(y) {
 		return false
 	}
-	return xid != yid && (!isSame(g.mat.At(xid, yid), g.absent) || !isSame(g.mat.At(yid, xid), g.absent))
+	return x != y && (!isSame(g.mat.At(i, j), g.absent) || !isSame(g.mat.At(j, i), g.absent))
 }
 
 // Edge returns the edge from u to v if such an edge exists and nil otherwise.
 // The node v must be directly reachable from u as defined by the From method.
-func (g *DirectedMatrix) Edge(u, v graph.Node) graph.Edge {
+func (g *DirectedMatrix) Edge(u, v graph.NodeID) graph.Edge {
 	if g.HasEdgeFromTo(u, v) {
-		return Edge{F: g.Node(u.ID()), T: g.Node(v.ID()), W: g.mat.At(u.ID(), v.ID())}
+		i, j := int(u), int(v)
+		return Edge{F: g.Node(u), T: g.Node(v), W: g.mat.At(i, j)}
 	}
 	return nil
 }
 
-// HasEdgeFromTo returns whether an edge exists in the graph from u to v.
-func (g *DirectedMatrix) HasEdgeFromTo(u, v graph.Node) bool {
-	uid := u.ID()
-	if !g.has(uid) {
+// HasEdgeFromTo reports whether an edge exists in the graph from u to v.
+func (g *DirectedMatrix) HasEdgeFromTo(u, v graph.NodeID) bool {
+	if !g.has(u) {
 		return false
 	}
-	vid := v.ID()
-	if !g.has(vid) {
+	if !g.has(v) {
 		return false
 	}
-	return uid != vid && !isSame(g.mat.At(uid, vid), g.absent)
+	i, j := int(u), int(v)
+	return u != v && !isSame(g.mat.At(i, j), g.absent)
 }
 
 // Weight returns the weight for the edge between x and y if Edge(x, y) returns a non-nil Edge.
 // If x and y are the same node or there is no joining edge between the two nodes the weight
 // value returned is either the graph's absent or self value. Weight returns true if an edge
 // exists between x and y or if x and y have the same ID, false otherwise.
-func (g *DirectedMatrix) Weight(x, y graph.Node) (w float64, ok bool) {
-	xid := x.ID()
-	yid := y.ID()
-	if xid == yid {
+func (g *DirectedMatrix) Weight(x, y graph.NodeID) (w float64, ok bool) {
+	if x == y {
 		return g.self, true
 	}
-	if g.has(xid) && g.has(yid) {
-		return g.mat.At(xid, yid), true
+	if g.has(x) && g.has(y) {
+		i, j := int(x), int(y)
+		return g.mat.At(i, j), true
 	}
 	return g.absent, false
 }
@@ -214,7 +214,8 @@ func (g *DirectedMatrix) SetEdge(e graph.Edge) {
 	if fid == tid {
 		panic("simple: set illegal edge")
 	}
-	g.mat.Set(fid, tid, e.Weight())
+	i, j := int(fid), int(tid)
+	g.mat.Set(i, j, e.Weight())
 }
 
 // RemoveEdge removes e from the graph, leaving the terminal nodes. If the edge does not exist
@@ -228,27 +229,28 @@ func (g *DirectedMatrix) RemoveEdge(e graph.Edge) {
 	if !g.has(tid) {
 		return
 	}
-	g.mat.Set(fid, tid, g.absent)
+	i, j := int(fid), int(tid)
+	g.mat.Set(i, j, g.absent)
 }
 
-// Degree returns the in+out degree of n in g.
-func (g *DirectedMatrix) Degree(n graph.Node) int {
-	id := n.ID()
+// Degree returns the in+out degree of the node in g.
+func (g *DirectedMatrix) Degree(id graph.NodeID) int {
 	var deg int
+	j := int(id)
 	r, c := g.mat.Dims()
 	for i := 0; i < r; i++ {
-		if i == id {
+		if i == j {
 			continue
 		}
-		if !isSame(g.mat.At(id, i), g.absent) {
+		if !isSame(g.mat.At(j, i), g.absent) {
 			deg++
 		}
 	}
 	for i := 0; i < c; i++ {
-		if i == id {
+		if i == j {
 			continue
 		}
-		if !isSame(g.mat.At(i, id), g.absent) {
+		if !isSame(g.mat.At(i, j), g.absent) {
 			deg++
 		}
 	}

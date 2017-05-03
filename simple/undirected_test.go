@@ -27,13 +27,15 @@ func TestMaxID(t *testing.T) {
 		g.AddNode(i)
 		nodes[i] = struct{}{}
 	}
-	g.RemoveNode(Node(0))
-	delete(nodes, Node(0))
-	g.RemoveNode(Node(2))
-	delete(nodes, Node(2))
+	n0 := g.Node(0)
+	g.RemoveNode(graph.NodeID(0))
+	delete(nodes, n0)
+	n2 := g.Node(2)
+	g.RemoveNode(graph.NodeID(2))
+	delete(nodes, n2)
 	n := Node(g.NewNodeID())
 	g.AddNode(n)
-	if !g.Has(n) {
+	if !g.Has(n.ID()) {
 		t.Error("added node does not exist in graph")
 	}
 	if _, exists := nodes[n]; exists {
@@ -56,7 +58,7 @@ func TestIssue123UndirectedGraph(t *testing.T) {
 	n1 := Node(g.NewNodeID())
 	g.AddNode(n1)
 
-	g.RemoveNode(n0)
+	g.RemoveNode(n0.ID())
 
 	n2 := Node(g.NewNodeID())
 	g.AddNode(n2)

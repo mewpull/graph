@@ -19,12 +19,12 @@ interface. If this is present, and the Cost (or HeuristicCost) argument is nil, 
 will be used.
 
 3. Finally, if no user data is supplied, it will use the functions UniformCost (always returns 1)
-and/or NulLHeuristic (always returns 0).
+and/or NullHeuristic (always returns 0).
 
 For information on the specification for Cost functions, please see the Coster interface.
 
 Finally, although the functions take in a Graph -- they will always use the correct behavior.
-If your graph implements DirectedGraph, it will use Successors and To where applicable,
+If your graph implements DirectedGraph, it will use From and To where applicable,
 if undirected, it will use From instead. If it implements neither, it will scan the edge list
 for successors and predecessors where applicable. (This is slow, you should always implement either
 Directed or Undirected)

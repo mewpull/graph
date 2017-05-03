@@ -246,7 +246,7 @@ func (g johnsonGraph) Nodes() []graph.Node {
 	return n
 }
 
-// Successors is required to satisfy Tarjan.
+// From is required to satisfy Tarjan.
 func (g johnsonGraph) From(n graph.Node) []graph.Node {
 	adj := g.succ[n.ID()]
 	if len(adj) == 0 {

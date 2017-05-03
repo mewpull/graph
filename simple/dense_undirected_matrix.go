@@ -54,7 +54,7 @@ func NewUndirectedMatrix(n int, init, self, absent float64) *UndirectedMatrix {
 func NewUndirectedMatrixFrom(nodes []graph.Node, init, self, absent float64) *UndirectedMatrix {
 	sort.Sort(ordered.ByID(nodes))
 	for i, n := range nodes {
-		if i != n.ID() {
+		if i != int(n.ID()) {
 			panic("simple: non-contiguous node IDs")
 		}
 	}
@@ -64,7 +64,7 @@ func NewUndirectedMatrixFrom(nodes []graph.Node, init, self, absent float64) *Un
 }
 
 // Node returns the node in the graph with the given ID.
-func (g *UndirectedMatrix) Node(id int) graph.Node {
+func (g *UndirectedMatrix) Node(id graph.NodeID) graph.Node {
 	if !g.has(id) {
 		return nil
 	}
@@ -74,14 +74,15 @@ func (g *UndirectedMatrix) Node(id int) graph.Node {
 	return g.nodes[id]
 }
 
-// Has returns whether the node exists within the graph.
-func (g *UndirectedMatrix) Has(n graph.Node) bool {
-	return g.has(n.ID())
+// Has reports whether the node exists within the graph.
+func (g *UndirectedMatrix) Has(n graph.NodeID) bool {
+	return g.has(n)
 }
 
-func (g *UndirectedMatrix) has(id int) bool {
+// has reports whether the node exists within the graph.
+func (g *UndirectedMatrix) has(id graph.NodeID) bool {
 	r := g.mat.Symmetric()
-	return 0 <= id && id < r
+	return 0 <= int(id) && int(id) < r
 }
 
 // Nodes returns all the nodes in the graph.
@@ -106,55 +107,55 @@ func (g *UndirectedMatrix) Edges() []graph.Edge {
 	for i := 0; i < r; i++ {
 		for j := i + 1; j < r; j++ {
 			if w := g.mat.At(i, j); !isSame(w, g.absent) {
-				edges = append(edges, Edge{F: g.Node(i), T: g.Node(j), W: w})
+				edges = append(edges, Edge{F: g.Node(graph.NodeID(i)), T: g.Node(graph.NodeID(j)), W: w})
 			}
 		}
 	}
 	return edges
 }
 
-// From returns all nodes in g that can be reached directly from n.
-func (g *UndirectedMatrix) From(n graph.Node) []graph.Node {
-	id := n.ID()
+// From returns all nodes in g that can be reached directly from the node.
+func (g *UndirectedMatrix) From(id graph.NodeID) []graph.Node {
 	if !g.has(id) {
 		return nil
 	}
 	var neighbors []graph.Node
+	j := int(id)
 	r := g.mat.Symmetric()
 	for i := 0; i < r; i++ {
-		if i == id {
+		if i == j {
 			continue
 		}
-		if !isSame(g.mat.At(id, i), g.absent) {
-			neighbors = append(neighbors, g.Node(i))
+		if !isSame(g.mat.At(j, i), g.absent) {
+			neighbors = append(neighbors, g.Node(graph.NodeID(i)))
 		}
 	}
 	return neighbors
 }
 
-// HasEdgeBetween returns whether an edge exists between nodes x and y.
-func (g *UndirectedMatrix) HasEdgeBetween(u, v graph.Node) bool {
-	uid := u.ID()
-	if !g.has(uid) {
+// HasEdgeBetween reports whether an edge exists between nodes x and y.
+func (g *UndirectedMatrix) HasEdgeBetween(u, v graph.NodeID) bool {
+	if !g.has(u) {
 		return false
 	}
-	vid := v.ID()
-	if !g.has(vid) {
+	if !g.has(v) {
 		return false
 	}
-	return uid != vid && !isSame(g.mat.At(uid, vid), g.absent)
+	i, j := int(u), int(v)
+	return u != v && !isSame(g.mat.At(i, j), g.absent)
 }
 
 // Edge returns the edge from u to v if such an edge exists and nil otherwise.
 // The node v must be directly reachable from u as defined by the From method.
-func (g *UndirectedMatrix) Edge(u, v graph.Node) graph.Edge {
+func (g *UndirectedMatrix) Edge(u, v graph.NodeID) graph.Edge {
 	return g.EdgeBetween(u, v)
 }
 
 // EdgeBetween returns the edge between nodes x and y.
-func (g *UndirectedMatrix) EdgeBetween(u, v graph.Node) graph.Edge {
+func (g *UndirectedMatrix) EdgeBetween(u, v graph.NodeID) graph.Edge {
 	if g.HasEdgeBetween(u, v) {
-		return Edge{F: g.Node(u.ID()), T: g.Node(v.ID()), W: g.mat.At(u.ID(), v.ID())}
+		i, j := int(u), int(v)
+		return Edge{F: g.Node(u), T: g.Node(v), W: g.mat.At(i, j)}
 	}
 	return nil
 }
@@ -163,14 +164,13 @@ func (g *UndirectedMatrix) EdgeBetween(u, v graph.Node) graph.Edge {
 // If x and y are the same node or there is no joining edge between the two nodes the weight
 // value returned is either the graph's absent or self value. Weight returns true if an edge
 // exists between x and y or if x and y have the same ID, false otherwise.
-func (g *UndirectedMatrix) Weight(x, y graph.Node) (w float64, ok bool) {
-	xid := x.ID()
-	yid := y.ID()
-	if xid == yid {
+func (g *UndirectedMatrix) Weight(x, y graph.NodeID) (w float64, ok bool) {
+	if x == y {
 		return g.self, true
 	}
-	if g.has(xid) && g.has(yid) {
-		return g.mat.At(xid, yid), true
+	if g.has(x) && g.has(y) {
+		i, j := int(x), int(y)
+		return g.mat.At(i, j), true
 	}
 	return g.absent, false
 }
@@ -183,7 +183,8 @@ func (g *UndirectedMatrix) SetEdge(e graph.Edge) {
 	if fid == tid {
 		panic("simple: set illegal edge")
 	}
-	g.mat.SetSym(fid, tid, e.Weight())
+	i, j := int(fid), int(tid)
+	g.mat.SetSym(i, j, e.Weight())
 }
 
 // RemoveEdge removes e from the graph, leaving the terminal nodes. If the edge does not exist
@@ -197,19 +198,20 @@ func (g *UndirectedMatrix) RemoveEdge(e graph.Edge) {
 	if !g.has(tid) {
 		return
 	}
-	g.mat.SetSym(fid, tid, g.absent)
+	i, j := int(fid), int(tid)
+	g.mat.SetSym(i, j, g.absent)
 }
 
-// Degree returns the degree of n in g.
-func (g *UndirectedMatrix) Degree(n graph.Node) int {
-	id := n.ID()
+// Degree returns the degree of the node in g.
+func (g *UndirectedMatrix) Degree(id graph.NodeID) int {
 	var deg int
 	r := g.mat.Symmetric()
+	j := int(id)
 	for i := 0; i < r; i++ {
-		if i == id {
+		if i == j {
 			continue
 		}
-		if !isSame(g.mat.At(id, i), g.absent) {
+		if !isSame(g.mat.At(j, i), g.absent) {
 			deg++
 		}
 	}

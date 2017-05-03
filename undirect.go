@@ -39,24 +39,24 @@ var (
 	_ Weighter   = Undirect{}
 )
 
-// Has returns whether the node exists within the graph.
-func (g Undirect) Has(n Node) bool { return g.G.Has(n) }
+// Has reports whether the node exists within the graph.
+func (g Undirect) Has(n NodeID) bool { return g.G.Has(n) }
 
 // Nodes returns all the nodes in the graph.
 func (g Undirect) Nodes() []Node { return g.G.Nodes() }
 
 // From returns all nodes in g that can be reached directly from u.
-func (g Undirect) From(u Node) []Node {
+func (g Undirect) From(u NodeID) []Node {
 	var (
 		nodes []Node
 		seen  intsets.Sparse
 	)
 	for _, n := range g.G.From(u) {
-		seen.Insert(n.ID())
+		seen.Insert(int(n.ID()))
 		nodes = append(nodes, n)
 	}
 	for _, n := range g.G.To(u) {
-		id := n.ID()
+		id := int(n.ID())
 		if seen.Has(id) {
 			continue
 		}
@@ -66,20 +66,20 @@ func (g Undirect) From(u Node) []Node {
 	return nodes
 }
 
-// HasEdgeBetween returns whether an edge exists between nodes x and y.
-func (g Undirect) HasEdgeBetween(x, y Node) bool { return g.G.HasEdgeBetween(x, y) }
+// HasEdgeBetween reports whether an edge exists between nodes x and y.
+func (g Undirect) HasEdgeBetween(x, y NodeID) bool { return g.G.HasEdgeBetween(x, y) }
 
 // Edge returns the edge from u to v if such an edge exists and nil otherwise.
 // The node v must be directly reachable from u as defined by the From method.
 // If an edge exists, the Edge returned is an EdgePair. The weight of
 // the edge is determined by applying the Merge func to the weights of the
 // edges between u and v.
-func (g Undirect) Edge(u, v Node) Edge { return g.EdgeBetween(u, v) }
+func (g Undirect) Edge(u, v NodeID) Edge { return g.EdgeBetween(u, v) }
 
 // EdgeBetween returns the edge between nodes x and y. If an edge exists, the
 // Edge returned is an EdgePair. The weight of the edge is determined by
 // applying the Merge func to the weights of edges between x and y.
-func (g Undirect) EdgeBetween(x, y Node) Edge {
+func (g Undirect) EdgeBetween(x, y NodeID) Edge {
 	fe := g.G.Edge(x, y)
 	re := g.G.Edge(y, x)
 	if fe == nil && re == nil {
@@ -120,7 +120,7 @@ func (g Undirect) EdgeBetween(x, y Node) Edge {
 // If x and y are the same node the internal node weight is returned. If there is no joining
 // edge between the two nodes the weight value returned is zero. Weight returns true if an edge
 // exists between x and y or if x and y have the same ID, false otherwise.
-func (g Undirect) Weight(x, y Node) (w float64, ok bool) {
+func (g Undirect) Weight(x, y NodeID) (w float64, ok bool) {
 	fe := g.G.Edge(x, y)
 	re := g.G.Edge(y, x)
 

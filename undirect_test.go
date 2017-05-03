@@ -111,8 +111,8 @@ func TestUndirect(t *testing.T) {
 		src := graph.Undirect{G: g, Absent: test.absent, Merge: test.merge}
 		dst := simple.NewUndirectedMatrixFrom(src.Nodes(), 0, 0, 0)
 		for _, u := range src.Nodes() {
-			for _, v := range src.From(u) {
-				dst.SetEdge(src.Edge(u, v))
+			for _, v := range src.From(u.ID()) {
+				dst.SetEdge(src.Edge(u.ID(), v.ID()))
 			}
 		}
 
