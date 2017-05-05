@@ -28,10 +28,10 @@ func TestMaxID(t *testing.T) {
 		nodes[i] = struct{}{}
 	}
 	n0 := g.Node(0)
-	g.RemoveNode(graph.NodeID(0))
+	g.RemoveNode(0)
 	delete(nodes, n0)
 	n2 := g.Node(2)
-	g.RemoveNode(graph.NodeID(2))
+	g.RemoveNode(2)
 	delete(nodes, n2)
 	n := Node(g.NewNodeID())
 	g.AddNode(n)

@@ -13,11 +13,11 @@ import (
 )
 
 // Node is a simple graph node.
-type Node graph.NodeID
+type Node int64
 
 // ID returns the ID number of the node.
-func (n Node) ID() graph.NodeID {
-	return graph.NodeID(n)
+func (n Node) ID() int64 {
+	return int64(n)
 }
 
 // Edge is a simple graph edge.

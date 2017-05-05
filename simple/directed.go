@@ -39,7 +39,7 @@ func NewDirectedGraph(self, absent float64) *DirectedGraph {
 
 // NewNodeID returns a new unique ID for a node to be added to g. The returned ID does
 // not become a valid ID in g until it is added to g.
-func (g *DirectedGraph) NewNodeID() graph.NodeID {
+func (g *DirectedGraph) NewNodeID() int64 {
 	if len(g.nodes) == 0 {
 		return 0
 	}
@@ -49,14 +49,14 @@ func (g *DirectedGraph) NewNodeID() graph.NodeID {
 
 	var id int
 	if g.freeIDs.Len() != 0 && g.freeIDs.TakeMin(&id) {
-		return graph.NodeID(id)
+		return int64(id)
 	}
 	if id = g.usedIDs.Max(); id < maxInt {
-		return graph.NodeID(id + 1)
+		return int64(id + 1)
 	}
 	for id = 0; id < maxInt; id++ {
 		if !g.usedIDs.Has(id) {
-			return graph.NodeID(id)
+			return int64(id)
 		}
 	}
 	panic("unreachable")
@@ -78,7 +78,7 @@ func (g *DirectedGraph) AddNode(n graph.Node) {
 
 // RemoveNode removes n from the graph, as well as any edges attached to it. If the node
 // is not in the graph it is a no-op.
-func (g *DirectedGraph) RemoveNode(n graph.NodeID) {
+func (g *DirectedGraph) RemoveNode(n int64) {
 	id := int(n)
 	if _, ok := g.nodes[id]; !ok {
 		return
@@ -141,12 +141,12 @@ func (g *DirectedGraph) RemoveEdge(e graph.Edge) {
 }
 
 // Node returns the node in the graph with the given ID.
-func (g *DirectedGraph) Node(id graph.NodeID) graph.Node {
+func (g *DirectedGraph) Node(id int64) graph.Node {
 	return g.nodes[int(id)]
 }
 
 // Has reports whether the node exists within the graph.
-func (g *DirectedGraph) Has(n graph.NodeID) bool {
+func (g *DirectedGraph) Has(n int64) bool {
 	_, ok := g.nodes[int(n)]
 
 	return ok
@@ -176,7 +176,7 @@ func (g *DirectedGraph) Edges() []graph.Edge {
 }
 
 // From returns all nodes in g that can be reached directly from n.
-func (g *DirectedGraph) From(n graph.NodeID) []graph.Node {
+func (g *DirectedGraph) From(n int64) []graph.Node {
 	fid := int(n)
 	if _, ok := g.from[fid]; !ok {
 		return nil
@@ -193,7 +193,7 @@ func (g *DirectedGraph) From(n graph.NodeID) []graph.Node {
 }
 
 // To returns all nodes in g that can reach directly to n.
-func (g *DirectedGraph) To(n graph.NodeID) []graph.Node {
+func (g *DirectedGraph) To(n int64) []graph.Node {
 	tid := int(n)
 	if _, ok := g.from[tid]; !ok {
 		return nil
@@ -211,7 +211,7 @@ func (g *DirectedGraph) To(n graph.NodeID) []graph.Node {
 
 // HasEdgeBetween reports whether an edge exists between nodes x and y without
 // considering direction.
-func (g *DirectedGraph) HasEdgeBetween(x, y graph.NodeID) bool {
+func (g *DirectedGraph) HasEdgeBetween(x, y int64) bool {
 	xid := int(x)
 	yid := int(y)
 	if _, ok := g.nodes[xid]; !ok {
@@ -229,7 +229,7 @@ func (g *DirectedGraph) HasEdgeBetween(x, y graph.NodeID) bool {
 
 // Edge returns the edge from u to v if such an edge exists and nil otherwise.
 // The node v must be directly reachable from u as defined by the From method.
-func (g *DirectedGraph) Edge(u, v graph.NodeID) graph.Edge {
+func (g *DirectedGraph) Edge(u, v int64) graph.Edge {
 	uid, vid := int(u), int(v)
 	if _, ok := g.nodes[uid]; !ok {
 		return nil
@@ -245,7 +245,7 @@ func (g *DirectedGraph) Edge(u, v graph.NodeID) graph.Edge {
 }
 
 // HasEdgeFromTo reports whether an edge exists in the graph from u to v.
-func (g *DirectedGraph) HasEdgeFromTo(u, v graph.NodeID) bool {
+func (g *DirectedGraph) HasEdgeFromTo(u, v int64) bool {
 	uid, vid := int(u), int(v)
 	if _, ok := g.nodes[uid]; !ok {
 		return false
@@ -263,7 +263,7 @@ func (g *DirectedGraph) HasEdgeFromTo(u, v graph.NodeID) bool {
 // If x and y are the same node or there is no joining edge between the two nodes the weight
 // value returned is either the graph's absent or self value. Weight returns true if an edge
 // exists between x and y or if x and y have the same ID, false otherwise.
-func (g *DirectedGraph) Weight(x, y graph.NodeID) (w float64, ok bool) {
+func (g *DirectedGraph) Weight(x, y int64) (w float64, ok bool) {
 	xid := int(x)
 	yid := int(y)
 	if xid == yid {
@@ -278,7 +278,7 @@ func (g *DirectedGraph) Weight(x, y graph.NodeID) (w float64, ok bool) {
 }
 
 // Degree returns the in+out degree of n in g.
-func (g *DirectedGraph) Degree(n graph.NodeID) int {
+func (g *DirectedGraph) Degree(n int64) int {
 	id := int(n)
 	if _, ok := g.nodes[id]; !ok {
 		return 0

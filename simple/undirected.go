@@ -37,7 +37,7 @@ func NewUndirectedGraph(self, absent float64) *UndirectedGraph {
 
 // NewNodeID returns a new unique ID for a node to be added to g. The returned ID does
 // not become a valid ID in g until it is added to g.
-func (g *UndirectedGraph) NewNodeID() graph.NodeID {
+func (g *UndirectedGraph) NewNodeID() int64 {
 	if len(g.nodes) == 0 {
 		return 0
 	}
@@ -47,14 +47,14 @@ func (g *UndirectedGraph) NewNodeID() graph.NodeID {
 
 	var id int
 	if g.freeIDs.Len() != 0 && g.freeIDs.TakeMin(&id) {
-		return graph.NodeID(id)
+		return int64(id)
 	}
 	if id = g.usedIDs.Max(); id < maxInt {
-		return graph.NodeID(id + 1)
+		return int64(id + 1)
 	}
 	for id = 0; id < maxInt; id++ {
 		if !g.usedIDs.Has(id) {
-			return graph.NodeID(id)
+			return int64(id)
 		}
 	}
 	panic("unreachable")
@@ -75,7 +75,7 @@ func (g *UndirectedGraph) AddNode(n graph.Node) {
 
 // RemoveNode removes the node from the graph, as well as any edges attached to it. If the node
 // is not in the graph it is a no-op.
-func (g *UndirectedGraph) RemoveNode(id graph.NodeID) {
+func (g *UndirectedGraph) RemoveNode(id int64) {
 	n := int(id)
 	if _, ok := g.nodes[n]; !ok {
 		return
@@ -134,12 +134,12 @@ func (g *UndirectedGraph) RemoveEdge(e graph.Edge) {
 }
 
 // Node returns the node in the graph with the given ID.
-func (g *UndirectedGraph) Node(id graph.NodeID) graph.Node {
+func (g *UndirectedGraph) Node(id int64) graph.Node {
 	return g.nodes[int(id)]
 }
 
 // Has reports whether the node exists within the graph.
-func (g *UndirectedGraph) Has(n graph.NodeID) bool {
+func (g *UndirectedGraph) Has(n int64) bool {
 	_, ok := g.nodes[int(n)]
 	return ok
 }
@@ -178,7 +178,7 @@ func (g *UndirectedGraph) Edges() []graph.Edge {
 }
 
 // From returns all nodes in g that can be reached directly from n.
-func (g *UndirectedGraph) From(n graph.NodeID) []graph.Node {
+func (g *UndirectedGraph) From(n int64) []graph.Node {
 	if !g.Has(n) {
 		return nil
 	}
@@ -194,19 +194,19 @@ func (g *UndirectedGraph) From(n graph.NodeID) []graph.Node {
 }
 
 // HasEdgeBetween reports whether an edge exists between nodes x and y.
-func (g *UndirectedGraph) HasEdgeBetween(x, y graph.NodeID) bool {
+func (g *UndirectedGraph) HasEdgeBetween(x, y int64) bool {
 	_, ok := g.edges[int(x)][int(y)]
 	return ok
 }
 
 // Edge returns the edge from u to v if such an edge exists and nil otherwise.
 // The node v must be directly reachable from u as defined by the From method.
-func (g *UndirectedGraph) Edge(u, v graph.NodeID) graph.Edge {
+func (g *UndirectedGraph) Edge(u, v int64) graph.Edge {
 	return g.EdgeBetween(u, v)
 }
 
 // EdgeBetween returns the edge between nodes x and y.
-func (g *UndirectedGraph) EdgeBetween(x, y graph.NodeID) graph.Edge {
+func (g *UndirectedGraph) EdgeBetween(x, y int64) graph.Edge {
 	// We don't need to check if neigh exists because
 	// it's implicit in the edges access.
 	if !g.Has(x) {
@@ -220,7 +220,7 @@ func (g *UndirectedGraph) EdgeBetween(x, y graph.NodeID) graph.Edge {
 // If x and y are the same node or there is no joining edge between the two nodes the weight
 // value returned is either the graph's absent or self value. Weight returns true if an edge
 // exists between x and y or if x and y have the same ID, false otherwise.
-func (g *UndirectedGraph) Weight(x, y graph.NodeID) (w float64, ok bool) {
+func (g *UndirectedGraph) Weight(x, y int64) (w float64, ok bool) {
 	if x == y {
 		return g.self, true
 	}
@@ -233,7 +233,7 @@ func (g *UndirectedGraph) Weight(x, y graph.NodeID) (w float64, ok bool) {
 }
 
 // Degree returns the degree of n in g.
-func (g *UndirectedGraph) Degree(n graph.NodeID) int {
+func (g *UndirectedGraph) Degree(n int64) int {
 	if _, ok := g.nodes[int(n)]; !ok {
 		return 0
 	}

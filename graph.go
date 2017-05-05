@@ -7,11 +7,8 @@ package graph
 // Node is a graph node.
 type Node interface {
 	// ID returns a graph-unique integer ID of the graph node.
-	ID() NodeID
+	ID() int64
 }
-
-// NodeID is a graph-unique integer ID of a graph node.
-type NodeID int
 
 // Edge is a graph edge. In directed graphs, the direction of the
 // edge is given from -> to, otherwise the edge is semantically
@@ -30,23 +27,23 @@ type Edge interface {
 // Graph is a generalized graph.
 type Graph interface {
 	// Has reports whether the node exists within the graph.
-	Has(id NodeID) bool
+	Has(id int64) bool
 
 	// Nodes returns all the nodes in the graph.
 	Nodes() []Node
 
 	// From returns all nodes that can be reached directly
 	// from the given node.
-	From(id NodeID) []Node
+	From(id int64) []Node
 
 	// HasEdgeBeteen reports whether an edge exists between
 	// nodes x and y without considering direction.
-	HasEdgeBetween(x, y NodeID) bool
+	HasEdgeBetween(x, y int64) bool
 
 	// Edge returns the edge from u to v if such an edge
 	// exists and nil otherwise. The node v must be directly
 	// reachable from u as defined by the From method.
-	Edge(u, v NodeID) Edge
+	Edge(u, v int64) Edge
 }
 
 // Undirected is an undirected graph.
@@ -54,7 +51,7 @@ type Undirected interface {
 	Graph
 
 	// EdgeBetween returns the edge between nodes x and y.
-	EdgeBetween(x, y NodeID) Edge
+	EdgeBetween(x, y int64) Edge
 }
 
 // Directed is a directed graph.
@@ -63,11 +60,11 @@ type Directed interface {
 
 	// HasEdgeFromTo reports whether an edge exists
 	// in the graph from u to v.
-	HasEdgeFromTo(u, v NodeID) bool
+	HasEdgeFromTo(u, v int64) bool
 
 	// To returns all nodes that can reach directly
 	// to the given node.
-	To(NodeID) []Node
+	To(id int64) []Node
 }
 
 // Weighter defines graphs that can report edge weights.
@@ -80,13 +77,13 @@ type Weighter interface {
 	// Weight returns true if an edge exists between
 	// x and y or if x and y have the same ID, false
 	// otherwise.
-	Weight(x, y NodeID) (w float64, ok bool)
+	Weight(x, y int64) (w float64, ok bool)
 }
 
 // NodeAdder is an interface for adding arbitrary nodes to a graph.
 type NodeAdder interface {
 	// NewNodeID returns a new unique arbitrary ID.
-	NewNodeID() NodeID
+	NewNodeID() int64
 
 	// Adds a node to the graph. AddNode panics if
 	// the added node ID matches an existing node ID.
@@ -98,7 +95,7 @@ type NodeRemover interface {
 	// RemoveNode removes a node from the graph, as
 	// well as any edges attached to it. If the node
 	// is not in the graph it is a no-op.
-	RemoveNode(NodeID)
+	RemoveNode(id int64)
 }
 
 // EdgeSetter is an interface for adding edges to a graph.

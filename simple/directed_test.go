@@ -19,7 +19,7 @@ var _ graph.Directed = &DirectedGraph{}
 func TestEdgeOvercounting(t *testing.T) {
 	g := generateDummyGraph()
 
-	if neigh := g.From(graph.NodeID(2)); len(neigh) != 2 {
+	if neigh := g.From(2); len(neigh) != 2 {
 		t.Errorf("Node 2 has incorrect number of neighbors got neighbors %v (count %d), expected 2 neighbors {0,1}", neigh, len(neigh))
 	}
 }
